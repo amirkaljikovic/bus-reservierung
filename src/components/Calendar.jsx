@@ -17,25 +17,32 @@ export default function CalendarComponent({ user }) {
     }, []);
 
     const handleDateSelect = async (selectInfo) => {
+
+        console.log(selectInfo);
+
         const newEvent = {
             title: `${user} reserviert`,
             start: selectInfo.startStr,
             end: selectInfo.endStr,
         };
+
         const res = await fetch("/api/reservierungen", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(newEvent),
         });
+
         if (res.status === 409) {
             const err = await res.json();
             alert(err.error);
             return;
         }
         if (res.ok) {
-            const saved = await res.json();
-            setEvents((prev) => [...prev, saved]);
-        }
+            // Nach erfolgreichem POST: neu laden
+            const refreshed = await fetch("/api/reservierungen");
+            const updatedEvents = await refreshed.json();
+            setEvents(updatedEvents);
+          }
     };
 
     const handleEventClick = async (clickInfo) => {
@@ -83,46 +90,41 @@ export default function CalendarComponent({ user }) {
     };
 
     // Neue Funktion zum Rendern der Event-Inhalte mit Löschbutton
-const renderEventContent = (eventInfo) => {
-    return (
-      <div className="flex justify-between items-center w-full">
-        <span className="text-sm truncate">{eventInfo.event.title}</span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation(); // verhindert Klick und Drag-Probleme
-            
-            const confirmed = confirm(`Reservierung löschen: "${eventInfo.event.title}"?`);
-            if (!confirmed) return;
-  
-            fetch("/api/reservierungen", {
-              method: "DELETE",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: eventInfo.event.id }),
-            }).then((res) => {
-              if (res.ok) {
-                setEvents((prev) =>
-                  prev.filter((e) => e.id !== eventInfo.event.id)
-                );
-              }
-            });
-          }}
-          className="ml-2 text-red-500 hover:text-red-700"
-          title="Löschen"
-        >
-          🗑️
-        </button>
-      </div>
-    );
-  };
+    const renderEventContent = (eventInfo) => {
+        return (
+            <div className="flex justify-between items-center w-full">
+                <span className="text-sm truncate">{eventInfo.event.title}</span>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation(); // verhindert Klick und Drag-Probleme
+
+                        const confirmed = confirm(`Reservierung löschen: "${eventInfo.event.title}"?`);
+                        if (!confirmed) return;
+
+                        fetch("/api/reservierungen", {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ id: eventInfo.event.id }),
+                        }).then((res) => {
+                            if (res.ok) {
+                                setEvents((prev) =>
+                                    prev.filter((e) => e.id !== eventInfo.event.id)
+                                );
+                            }
+                        });
+                    }}
+                    className="ml-2 text-red-500 hover:text-red-700"
+                    title="Löschen"
+                >
+                    🗑️
+                </button>
+            </div>
+        );
+    };
 
     return (
         <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">Vereinsbus-Reservierung</h1>
-
-            <div className="mb-4">
-                <button onClick={() => switchView("timeGridWeek")} className="mr-2 px-4 py-1 bg-blue-500 text-white rounded">Woche</button>
-                <button onClick={() => switchView("dayGridMonth")} className="px-4 py-1 bg-gray-300 text-black rounded">Monat</button>
-            </div>
+            <h1 className="text-2xl font-bold mb-4">USV Vereinsbus-Reservierung</h1>
 
             <FullCalendar
                 ref={calendarRef}
@@ -135,7 +137,12 @@ const renderEventContent = (eventInfo) => {
                 events={events}
                 eventDrop={handleEventDrop}
                 eventContent={renderEventContent}
-        
+                headerToolbar = {{
+                    start: "today prev next", 
+                    center: "title",
+                 end: "dayGridMonth timeGridWeek timeGridDay" }
+
+                }
                 height="auto"
                 slotMinTime="06:00:00"
                 slotMaxTime="22:00:00"

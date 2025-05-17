@@ -17,6 +17,7 @@
     "@fullcalendar/interaction": "^6.1.17",
     "@fullcalendar/react": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.17",
+    "@supabase/supabase-js": "^2.49.4",
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5",
     "astro": "^5.7.13",
