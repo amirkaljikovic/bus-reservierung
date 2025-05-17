@@ -1,16 +1,28 @@
 ---
-import astroLogo from '../assets/astro.svg';
-import background from '../assets/background.svg';
-import LoginWrapper from '../components/LoginWrapper';
+import LoginWrapper from "../components/LoginWrapper";
+import { supabase } from "../lib/supabaseClient.js";
+
+
+const { data, error } = await supabase
+	.from("reservierung")
+	.select("*")
+	.order("start", { ascending: true });
 ---
 
 <html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Busreservierung</title>
-  </head>
-  <body>
-    <LoginWrapper client:load />
-  </body>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	</head>
+	<body style="font-family: sans-serif; padding: 2rem;">
+		<div style="text-align: center; margin-bottom: 2rem;">
+			<img
+				src="/assets/Logo-weiss.svg"
+				alt="Vereinslogo"
+				style="height: 120px;"
+			/>
+		</div>
+		<div style="margin-top: 24px;"></div>
+		<LoginWrapper client:load />
+	</body>
 </html>

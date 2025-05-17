@@ -21,9 +21,9 @@ export default function CalendarComponent({ user }) {
         console.log(selectInfo);
 
         const newEvent = {
-            title: `${user} reserviert`,
-            start: selectInfo.startStr,
-            end: selectInfo.endStr,
+            title: `${user}`,
+            start: selectInfo.start.toISOString(),
+            end: selectInfo.end.toISOString()
         };
 
         const res = await fetch("/api/reservierungen", {
@@ -37,12 +37,12 @@ export default function CalendarComponent({ user }) {
             alert(err.error);
             return;
         }
+
         if (res.ok) {
-            // Nach erfolgreichem POST: neu laden
             const refreshed = await fetch("/api/reservierungen");
             const updatedEvents = await refreshed.json();
             setEvents(updatedEvents);
-          }
+        }
     };
 
     const handleEventClick = async (clickInfo) => {
@@ -60,34 +60,34 @@ export default function CalendarComponent({ user }) {
         }
     };
 
-    const switchView = (viewName) => {
-        const calendarApi = calendarRef.current?.getApi();
-        if (calendarApi) {
-            calendarApi.changeView(viewName);
-        }
-    };
-
     const handleEventDrop = async (dropInfo) => {
         const updatedEvent = {
-            id: dropInfo.event.id,
-            start: dropInfo.event.start.toISOString(),
-            end: dropInfo.event.end?.toISOString(),
+          id: dropInfo.event.id,
+          start: dropInfo.event.start.toISOString(),
+          end: dropInfo.event.end?.toISOString(),
         };
-
+      
         const res = await fetch("/api/reservierungen", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatedEvent),
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedEvent),
         });
-
+      
         if (!res.ok) {
-            alert("Fehler beim Verschieben der Reservierung");
-            dropInfo.revert(); // Rückgängig machen
-        } else {
-            // Optionale Rückmeldung
-            console.log("Reservierung verschoben");
+          alert("Fehler beim Verschieben der Reservierung");
+          dropInfo.revert(); // Rückgängig machen
+          return;
         }
-    };
+      
+        // ✅ Nur bei Erfolg weiter
+        const refreshed = await fetch("/api/reservierungen");
+        const updatedEvents = await refreshed.json();
+        setEvents(updatedEvents);
+      
+        // 🔁 Falls du auch die Liste außerhalb des Kalenders aktualisieren willst:
+        if (onReservationChange) onReservationChange();
+      };
+      
 
     // Neue Funktion zum Rendern der Event-Inhalte mit Löschbutton
     const renderEventContent = (eventInfo) => {
@@ -107,6 +107,7 @@ export default function CalendarComponent({ user }) {
                             body: JSON.stringify({ id: eventInfo.event.id }),
                         }).then((res) => {
                             if (res.ok) {
+
                                 setEvents((prev) =>
                                     prev.filter((e) => e.id !== eventInfo.event.id)
                                 );
@@ -122,9 +123,12 @@ export default function CalendarComponent({ user }) {
         );
     };
 
+
+
     return (
-        <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">USV Vereinsbus-Reservierung</h1>
+        <div className="p-4 ">
+            <hr></hr>
+            <h2 className="text-2xl font-bold mb-4">Kalendar Ansicht</h2>
 
             <FullCalendar
                 ref={calendarRef}
@@ -137,10 +141,11 @@ export default function CalendarComponent({ user }) {
                 events={events}
                 eventDrop={handleEventDrop}
                 eventContent={renderEventContent}
-                headerToolbar = {{
-                    start: "today prev next", 
+                headerToolbar={{
+                    start: "today prev next",
                     center: "title",
-                 end: "dayGridMonth timeGridWeek timeGridDay" }
+                    end: "dayGridMonth timeGridWeek timeGridDay"
+                }
 
                 }
                 height="auto"
