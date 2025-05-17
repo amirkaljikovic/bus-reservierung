@@ -1,4 +1,4 @@
-import { supabase } from '../../libsupabaseClient.js';
+import { supabase } from '../../lib/supabaseClient.js';
 
 export async function GET() {
   const { data, error } = await supabase.from('reservierung').select('*');
